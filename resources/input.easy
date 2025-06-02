@@ -1,0 +1,9 @@
+programa
+  x = a + b
+
+  media = (x + y) / 2
+
+  teste = media - 7
+
+  while (teste < 0) media = media + 1
+fimprog;

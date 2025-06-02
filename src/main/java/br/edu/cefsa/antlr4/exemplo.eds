@@ -1,0 +1,19 @@
+programa ExemploGrupo9;
+
+var a : real;
+var b : real;
+
+inicio
+    ler(a);
+    ler(b);
+    
+    a = 1 + 2 * 3 / b;
+    
+    enquanto a > b faca
+        escrever(a);
+        a = a - 1;
+    fimenquanto
+    
+    escrever("Fim do loop. Valor final de a: ");
+    escrever(a);
+fimprograma

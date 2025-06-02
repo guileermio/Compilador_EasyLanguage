@@ -1,0 +1,13 @@
+programa
+  const numero LIMITE = 3;
+  numero contador, soma;
+
+  contador = 0;
+  soma = 0;
+
+  enquanto (contador < LIMITE) {
+    soma = soma + contador;
+    contador = contador + 1;
+  }
+  escreva(soma);
+fimprog;

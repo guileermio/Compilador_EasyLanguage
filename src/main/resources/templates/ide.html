@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compilador EasyLaguage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #020305 0%,
+          #0b0d15 25%,
+          #14172b 50%,
+          #0b0d15 75%,
+          #020305 100%
+        );
+        min-height: 100vh;
+        padding: 20px;
+        color: #7a8abb;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: rgba(8, 9, 15, 0.95);
+        border-radius: 16px;
+        box-shadow:
+          0 24px 48px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(60, 140, 255, 0.1);
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(18, 22, 38, 0.9);
+      }
+
+      .header {
+        background: linear-gradient(135deg, #0b0d15 0%, #2e4479 30%, #505f8b 60%, #14172b 100%);
+        color: #a0a9dd;
+        padding: 40px 30px;
+        text-align: center;
+        border-bottom: 1px solid rgba(18, 22, 38, 0.9);
+      }
+
+      .header h1 {
+        font-size: 2.8em;
+        font-weight: 700;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #2e4479 0%, #5f7bb0 50%, #3b5ea8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
+      }
+
+      .header .subtitle {
+        font-size: 1.1em;
+        opacity: 0.85;
+        margin-bottom: 16px;
+        font-weight: 400;
+      }
+
+      .header .description {
+        font-size: 0.95em;
+        opacity: 0.75;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.6;
+        color: #8a94c5;
+      }
+
+      /* Layout mais vertical */
+      .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        padding: 30px;
+      }
+
+      .editor-section,
+      .result-section {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        background: rgba(18, 22, 38, 0.9);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(18, 22, 38, 0.9);
+      }
+
+      .section-title {
+        font-size: 1.3em;
+        font-weight: 600;
+        color: #a0a9dd;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #a0a9dd;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-title::before {
+        content: "";
+        width: 4px;
+        height: 20px;
+        background: #a0a9dd;
+        border-radius: 2px;
+      }
+
+      .code-editor {
+        flex: 1;
+        font-family: "JetBrains Mono", "Consolas", "Monaco", "Courier New", monospace;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 24px;
+        border: 1px solid rgba(18, 22, 38, 0.9);
+        border-radius: 12px;
+        resize: none;
+        background: #0b0d15;
+        color: #a0a9dd;
+        line-height: 1.6;
+        transition: all 0.3s ease;
+      }
+
+      .code-editor:focus {
+        outline: none;
+        border-color: #345da8;
+        box-shadow:
+          0 0 0 3px rgba(52, 93, 168, 0.1),
+          0 0 20px rgba(52, 93, 168, 0.2);
+      }
+
+      .code-editor::placeholder {
+        color: #40466b;
+      }
+
+      .controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: none;
+        letter-spacing: 0.025em;
+        font-family: "Inter", sans-serif;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          transparent 30%,
+          rgba(255, 255, 255, 0.1) 50%,
+          transparent 70%
+        );
+        transform: translateX(-100%);
+        transition: transform 0.6s;
+      }
+
+      .btn:hover::before:not(:disabled) {
+        transform: translateX(100%);
+      }
+
+      /* Botões com tons de azul escuro */
+      .btn-primary {
+        background: linear-gradient(135deg, #2e4479 0%, #1f2f5a 100%);
+        color: #eceff4;
+        box-shadow: 0 4px 16px rgba(52, 93, 168, 0.4);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 93, 168, 0.6);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #1f2230 0%, #2a2f44 100%);
+        color: #a0a9dd;
+        border: 1px solid rgba(60, 140, 255, 0.2);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(60, 140, 255, 0.2);
+        border-color: rgba(60, 140, 255, 0.4);
+      }
+
+      .result-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 12px;
+      }
+
+      .tab {
+        padding: 12px 20px;
+        background: #14172b;
+        border: 1px solid rgba(18, 22, 38, 0.9);
+        border-bottom: none;
+        border-radius: 8px 8px 0 0;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.2s ease;
+        color: #8a94c5;
+        font-family: "Inter", sans-serif;
+      }
+
+      .tab.active {
+        background: linear-gradient(135deg, #2e4479 0%, #1f2f5a 100%);
+        color: #eceff4;
+        border-color: #2e4479;
+      }
+
+      .tab:hover:not(.active) {
+        background: #2a2f44;
+        color: #a0a9dd;
+      }
+
+      .result-content {
+        flex: 1;
+        padding: 24px;
+        border: 1px solid rgba(18, 22, 38, 0.9);
+        border-radius: 12px;
+        background: #0b0d15;
+        font-family: "JetBrains Mono", "Consolas", "Monaco", "Courier New", monospace;
+        font-size: 13px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        color: #a0a9dd;
+      }
+
+      .status {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-weight: 600;
+        text-align: center;
+        font-family: "Inter", sans-serif;
+      }
+
+      .status.success {
+        background: linear-gradient(135deg, #728a4e 0%, #3a9482 100%);
+        color: #eceff4;
+        border: 1px solid rgba(114, 138, 78, 0.3);
+      }
+
+      .status.error {
+        background: linear-gradient(135deg, #d94c5b 0%, #b43a4a 100%);
+        color: #eceff4;
+        border: 1px solid rgba(217, 76, 91, 0.3);
+      }
+
+      .status.warning {
+        background: linear-gradient(135deg, #c17a3d 0%, #9f6a38 100%);
+        color: #eceff4;
+        border: 1px solid rgba(193, 122, 61, 0.3);
+      }
+
+      .error-list,
+      .warning-list {
+        margin: 16px 0;
+      }
+
+      .error-item,
+      .warning-item {
+        padding: 12px 16px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border-left: 4px solid;
+        font-family: "Inter", sans-serif;
+        font-size: 13px;
+      }
+
+      .error-item {
+        background: rgba(217, 76, 91, 0.1);
+        border-left-color: #d94c5b;
+        color: #d94c5b;
+      }
+
+      .warning-item {
+        background: rgba(193, 122, 61, 0.1);
+        border-left-color: #c17a3d;
+        color: #c17a3d;
+      }
+
+      .example-section {
+        margin-top: 24px;
+        padding: 24px;
+        background: rgba(18, 22, 38, 0.7);
+        border-radius: 12px;
+        border: 1px solid rgba(18, 22, 38, 0.9);
+      }
+
+      .example-title {
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #a0a9dd;
+        font-family: "Inter", sans-serif;
+      }
+
+      .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .example-item {
+        background: #0b0d15;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(60, 140, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        font-weight: 500;
+        color: #a0a9dd;
+        font-family: "Inter", sans-serif;
+        text-align: left;
+      }
+
+      .example-item:hover {
+        background: #14172b;
+        border-color: rgba(60, 140, 255, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(60, 140, 255, 0.1);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 32px;
+      }
+
+      .spinner {
+        border: 3px solid rgba(52, 93, 168, 0.2);
+        border-top: 3px solid #345da8;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .symbol-table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+      }
+
+      .symbol-table th,
+      .symbol-table td {
+        border: 1px solid rgba(18, 22, 38, 0.9);
+        padding: 10px 12px;
+        text-align: left;
+      }
+
+      .symbol-table th {
+        background: #14172b;
+        font-weight: 600;
+        color: #a0a9dd;
+        font-family: "Inter", sans-serif;
+      }
+
+      .symbol-table td {
+        background: rgba(8, 9, 15, 0.5);
+        color: #7a8abb;
+      }
+
+      .symbol-table tr:hover td {
+        background: rgba(18, 22, 38, 0.5);
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .header h1 {
+          font-size: 2.2em;
+        }
+
+        .examples-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #0b0d15;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #2a2f44;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #40466b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Compilador EasyLaguage</h1>
+        <p class="subtitle">Processamento Léxico, Sintático e Verificação Semântica</p>
+        <p class="description">
+          Uma plataforma completa para transformar e validar seu código EasyLanguage. Executa
+          detecção de tokens na fase léxica, verifica regras gramaticais na análise sintática e
+          confere coerência de tipos e escopos na etapa semântica. Gere um código Java otimizado e
+          acompanhe, em tempo real, a tabela de símbolos do seu programa.
+        </p>
+      </div>
+
+      <div class="main-content">
+        <div class="editor-section">
+          <div class="section-title">Editor de Código</div>
+          <textarea
+            id="codeEditor"
+            class="code-editor"
+            placeholder="Cole ou digite seu código EasyLanguage aqui..."></textarea>
+
+          <div class="controls">
+            <button id="compileBtn" class="btn btn-primary">Compilar</button>
+            <button id="clearBtn" class="btn btn-secondary">Limpar</button>
+          </div>
+
+          <div class="example-section">
+            <div class="example-title">Exemplos de Código</div>
+            <div class="examples-grid">
+              <div class="example-item" data-example="1">1. Declaração Básica</div>
+              <div class="example-item" data-example="2">2. Entrada/Saída</div>
+              <div class="example-item" data-example="3">3. Atribuição</div>
+              <div class="example-item" data-example="4">4. Condicional</div>
+              <div class="example-item" data-example="5">5. Laço While</div>
+              <div class="example-item" data-example="6">6. Laço For</div>
+              <div class="example-item" data-example="7">7. Função Simples</div>
+              <div class="example-item" data-example="8">8. Constantes</div>
+              <div class="example-item" data-example="9">9. Tipos de Dados</div>
+              <div class="example-item" data-example="10">10. Expressão Aritmética</div>
+              <div class="example-item" data-example="11">11. Expressão Lógica</div>
+              <div class="example-item" data-example="12">12. Função Void</div>
+              <div class="example-item" data-example="13">13. For com Passo</div>
+              <div class="example-item" data-example="14">14. Comentários</div>
+              <div class="example-item" data-example="15">15. Erro: Não Declarada</div>
+              <div class="example-item" data-example="16">16. Erro: Não Inicializada</div>
+              <div class="example-item" data-example="17">17. Múltiplas Declarações</div>
+              <div class="example-item" data-example="18">18. If Aninhado</div>
+              <div class="example-item" data-example="19">19. While Aninhado</div>
+              <div class="example-item" data-example="20">20. Função c/ Parâmetros</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-section">
+          <div class="section-title">Resultado da Compilação</div>
+
+          <div class="result-tabs">
+            <button class="tab active" data-tab="output">Saída</button>
+            <button class="tab" data-tab="java">Java Gerado</button>
+            <button class="tab" data-tab="symbols">Símbolos</button>
+          </div>
+
+          <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Compilando código...</p>
+          </div>
+
+          <div id="output" class="result-content">Pressione "Compilar" para iniciar a análise.</div>
+
+          <div id="java" class="result-content" style="display: none">
+            Aqui aparecerá o código Java produzido após compilação bem-sucedida.
+          </div>
+
+          <div id="symbols" class="result-content" style="display: none">
+            Nesta área, a tabela de símbolos será exibida após o processamento.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Interface do usuário
+      const codeEditor = document.getElementById("codeEditor");
+      const compileBtn = document.getElementById("compileBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const loading = document.getElementById("loading");
+      const tabs = document.querySelectorAll(".tab");
+      const resultContents = document.querySelectorAll(".result-content");
+      const exampleItems = document.querySelectorAll(".example-item");
+
+      // Exemplos de código
+      const examples = {
+        1: `programa TesteBasico
+inteiro x = 5;
+real y = 3.14;
+texto nome = "João";
+inicio
+    escreva("Teste básico");
+fim;`,
+        2: `programa TesteIO
+inteiro numero;
+texto mensagem;
+inicio
+    escreva("Digite um número: ");
+    leia(numero);
+    escreva("Você digitou: ");
+    escreva(numero);
+fim;`,
+        3: `programa TesteAtribuicao
+inteiro a, b;
+inicio
+    a = 10;
+    b = 20;
+    a = a + b;
+    escreva(a);
+fim;`,
+        4: `programa TesteCondicional
+inteiro idade;
+inicio
+    leia(idade);
+    se (idade >= 18) entao {
+        escreva("Maior de idade");
+    } senao {
+        escreva("Menor de idade");
+    }
+fim;`,
+        5: `programa TesteWhile
+inteiro contador;
+inicio
+    contador = 1;
+    enquanto (contador <= 3) faca {
+        escreva(contador);
+        contador = contador + 1;
+    }
+fim;`,
+        6: `programa TesteFor
+inteiro i;
+inicio
+    para i = 1 ate 5 faca {
+        escreva(i);
+    }
+fim;`,
+        7: `programa TesteFuncao
+inteiro funcao somar(inteiro a, inteiro b)
+inicio
+    retorna a + b;
+fim;
+
+inicio
+    escreva(somar(3, 4));
+fim;`,
+        8: `programa TesteConstante
+const inteiro LIMITE = 100;
+const texto TITULO = "Sistema";
+inteiro valor;
+inicio
+    valor = LIMITE;
+    escreva(TITULO);
+    escreva(valor);
+fim;`,
+        9: `programa TesteTipos
+inteiro num = 42;
+real preco = 19.99;
+texto palavra = "teste";
+caractere letra = 'A';
+logico ativo = verdadeiro;
+inicio
+    escreva(num);
+    escreva(preco);
+    escreva(palavra);
+    escreva(letra);
+    escreva(ativo);
+fim;`,
+        10: `programa TesteAritmetica
+inteiro a, b, resultado;
+inicio
+    a = 10;
+    b = 3;
+    resultado = a + b * 2;
+    escreva(resultado);
+    resultado = a / b;
+    escreva(resultado);
+    resultado = a % b;
+    escreva(resultado);
+fim;`,
+        11: `programa TesteLogica
+inteiro x, y;
+logico resultado;
+inicio
+    x = 5;
+    y = 3;
+    resultado = x > y e x < 10;
+    escreva(resultado);
+    resultado = x == 5 ou y == 1;
+    escreva(resultado);
+fim;`,
+        12: `programa TesteFuncaoVoid
+vazio funcao mostrarMensagem()
+inicio
+    escreva("Olá mundo!");
+fim;
+
+inicio
+    mostrarMensagem();
+fim;`,
+        13: `programa TesteForPasso
+inteiro i;
+inicio
+    para i = 2 ate 10 passo 2 faca {
+        escreva(i);
+    }
+fim;`,
+        14: `programa TesteComentarios
+// Este é um comentário de linha
+inteiro x = 5; // Variável x
+/* 
+   Este é um comentário
+   de múltiplas linhas
+*/
+inicio
+    escreva(x);
+fim;`,
+        15: `programa TesteErroSemantico
+inteiro a;
+inicio
+    a = 10;
+    b = 20; // Erro: b não foi declarada
+    escreva(a);
+fim;`,
+        16: `programa TesteErroInicializacao
+inteiro x, y;
+inicio
+    y = 10;
+    x = y + z; // Erro: z não foi inicializada
+    escreva(x);
+fim;`,
+        17: `programa TesteMultiplas
+inteiro a = 1, b = 2, c = 3;
+texto nome1 = "Ana", nome2 = "Bob";
+inicio
+    escreva(a);
+    escreva(b);
+    escreva(c);
+    escreva(nome1);
+    escreva(nome2);
+fim;`,
+        18: `programa TesteNestedIf
+inteiro nota;
+inicio
+    leia(nota);
+    se (nota >= 60) entao {
+        se (nota >= 90) entao {
+            escreva("Excelente");
+        } senao {
+            escreva("Aprovado");
+        }
+    } senao {
+        escreva("Reprovado");
+    }
+fim;`,
+        19: `programa TesteWhileAninhado
+inteiro i, j;
+inicio
+    i = 1;
+    enquanto (i <= 2) faca {
+        j = 1;
+        enquanto (j <= 2) faca {
+            escreva(i);
+            escreva(j);
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+fim;`,
+        20: `programa TesteFuncaoParametros
+real funcao calcular(real a, real b, real c)
+inicio
+    retorna a * b + c;
+fim;
+
+inicio
+    escreva(calcular(2.0, 3.0, 1.0));
+fim;`,
+      };
+
+      // Event listeners
+      compileBtn.addEventListener("click", compileCode);
+      clearBtn.addEventListener("click", clearEditor);
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+      });
+
+      exampleItems.forEach((item) => {
+        item.addEventListener("click", () => loadExample(item.dataset.example));
+      });
+
+      function loadExample(exampleNumber) {
+        const code = examples[exampleNumber];
+        if (code) {
+          codeEditor.value = code;
+          codeEditor.focus();
+        }
+      }
+
+      async function compileCode() {
+        const code = codeEditor.value.trim();
+
+        if (!code) {
+          showError("Por favor, digite algum código para compilar.");
+          return;
+        }
+
+        // Mostrar loading
+        loading.style.display = "block";
+        resultContents.forEach((content) => (content.style.display = "none"));
+        compileBtn.disabled = true;
+
+        try {
+          const response = await fetch("/easylanguage/compile", {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+            },
+            body: code,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+          }
+
+          const result = await response.json();
+          displayResult(result);
+        } catch (error) {
+          console.error("Erro na compilação:", error);
+          showError("Erro ao comunicar com o servidor: " + error.message);
+        } finally {
+          loading.style.display = "none";
+          switchTab("output");
+          compileBtn.disabled = false;
+        }
+      }
+
+      function clearEditor() {
+        codeEditor.value = "";
+        document.getElementById("output").innerHTML =
+          'Pressione "Compilar" para iniciar a análise.';
+        document.getElementById("java").innerHTML =
+          "Aqui aparecerá o código Java produzido após compilação bem-sucedida.";
+        document.getElementById("symbols").innerHTML =
+          "Nesta área, a tabela de símbolos será exibida após o processamento.";
+      }
+
+      function switchTab(tabName) {
+        tabs.forEach((tab) => tab.classList.remove("active"));
+        resultContents.forEach((content) => (content.style.display = "none"));
+        const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+        const activeContent = document.getElementById(tabName);
+        if (activeTab && activeContent) {
+          activeTab.classList.add("active");
+          activeContent.style.display = "block";
+        }
+      }
+
+      function displayResult(result) {
+        const outputDiv = document.getElementById("output");
+        const javaDiv = document.getElementById("java");
+        const symbolsDiv = document.getElementById("symbols");
+
+        outputDiv.innerHTML = "";
+        javaDiv.innerHTML = "";
+        symbolsDiv.innerHTML = "";
+
+        const statusClass = result.success ? "success" : "error";
+        const statusDiv = document.createElement("div");
+        statusDiv.className = `status ${statusClass}`;
+        statusDiv.textContent =
+          result.message || (result.success ? "Compilação bem-sucedida!" : "Falha na compilação");
+        outputDiv.appendChild(statusDiv);
+
+        if (result.errors && result.errors.length > 0) {
+          const errorsDiv = document.createElement("div");
+          errorsDiv.innerHTML = "<strong>Erros:</strong>";
+          result.errors.forEach((error) => {
+            const errorItem = document.createElement("div");
+            errorItem.className = "error-item";
+            errorItem.textContent = error;
+            errorsDiv.appendChild(errorItem);
+          });
+          outputDiv.appendChild(errorsDiv);
+        }
+
+        if (result.warnings && result.warnings.length > 0) {
+          const warningsDiv = document.createElement("div");
+          warningsDiv.innerHTML = "<strong>Avisos:</strong>";
+          result.warnings.forEach((warning) => {
+            const warningItem = document.createElement("div");
+            warningItem.className = "warning-item";
+            warningItem.textContent = warning;
+            warningsDiv.appendChild(warningItem);
+          });
+          outputDiv.appendChild(warningsDiv);
+        }
+
+        if (result.success && result.generatedCode) {
+          javaDiv.textContent = result.generatedCode;
+        } else {
+          javaDiv.innerHTML = "Código Java não foi gerado devido a erros na compilação.";
+        }
+
+        if (result.symbolTable && result.symbolTable.length > 0) {
+          const table = document.createElement("table");
+          table.className = "symbol-table";
+          const thead = document.createElement("thead");
+          thead.innerHTML = `
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Linha</th>
+                        <th>Usado</th>
+                        <th>Inicializado</th>
+                    </tr>
+                `;
+          table.appendChild(thead);
+
+          const tbody = document.createElement("tbody");
+          result.symbolTable.forEach((symbol) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                        <td>${symbol.name}</td>
+                        <td>${symbol.type}</td>
+                        <td>${symbol.line}</td>
+                        <td>${symbol.used ? "✓" : "✗"}</td>
+                        <td>${symbol.initialized ? "✓" : "✗"}</td>
+                    `;
+            tbody.appendChild(row);
+          });
+          table.appendChild(tbody);
+          symbolsDiv.appendChild(table);
+        } else {
+          symbolsDiv.innerHTML = "Nenhum símbolo encontrado ou tabela não disponível.";
+        }
+      }
+
+      function showError(message) {
+        const outputDiv = document.getElementById("output");
+        outputDiv.innerHTML = `
+                <div class="status error">
+                    ${message}
+                </div>
+            `;
+        switchTab("output");
+      }
+    </script>
+  </body>
+</html>
